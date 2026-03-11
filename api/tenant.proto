@@ -1,0 +1,94 @@
+// Определя синтаксиса на Protocol Buffers версия 3.
+syntax = "proto3";
+
+// Декларира пакета за този proto файл. Помага за избягване на конфликти в имената.
+package api;
+
+// Опция, специфична за Go. Указва пълния импортен път за генерирания Go пакет.
+option go_package = "github.com/georgirtodorov/tenant-control-service/api";
+
+// --- Основна структура на данните ---
+
+// Tenant представлява един клиент (наемател) в системата.
+// Това е основната единица данни, с която работи услугата.
+message Tenant {
+  // Уникален идентификатор на клиента, генериран от системата (напр. UUID).
+  string id = 1;
+
+  // Име на клиента, предоставено от потребителя.
+  string name = 2;
+
+  // Тук могат да се добавят други метаданни в бъдеще,
+  // например дата на създаване, статус и т.н.
+}
+
+// --- Дефиниция на услугата и нейните методи (RPCs) ---
+
+// Registry услугата управлява жизнения цикъл на клиентите (tenants).
+// "Registry" (регистър) подсказва, че това е мястото, където се съхранява
+// и управлява информацията за всички клиенти.
+service Registry {
+  // CreateTenant създава нов клиент в системата.
+  rpc CreateTenant(CreateTenantRequest) returns (CreateTenantResponse);
+
+  // GetTenant извлича информация за конкретен клиент по неговия ID.
+  rpc GetTenant(GetTenantRequest) returns (GetTenantResponse);
+
+  // UpdateTenant актуализира информацията за съществуващ клиент.
+  rpc UpdateTenant(UpdateTenantRequest) returns (UpdateTenantResponse);
+
+  // DeleteTenant изтрива клиент от системата.
+  rpc DeleteTenant(DeleteTenantRequest) returns (DeleteTenantResponse);
+}
+
+// --- Съобщения за заявки и отговори ---
+
+// Заявка за създаване на нов клиент.
+message CreateTenantRequest {
+  // Обектът Tenant, който да бъде създаден. Полето 'id' може да бъде празно,
+  // тъй като сървърът обикновено го генерира.
+  Tenant tenant = 1;
+}
+
+// Отговор след създаване на клиент.
+message CreateTenantResponse {
+  // Пълният обект Tenant, включително генерирания от сървъра 'id'.
+  Tenant tenant = 1;
+}
+
+// Заявка за извличане на клиент.
+message GetTenantRequest {
+  // Уникалният идентификатор на клиента, който да бъде извлечен.
+  string id = 1;
+}
+
+// Отговор, съдържащ информацията за клиента.
+message GetTenantResponse {
+  // Намереният обект Tenant.
+  Tenant tenant = 1;
+}
+
+// Заявка за актуализиране на клиент.
+message UpdateTenantRequest {
+  // Обектът Tenant с новите данни. Полето 'id' трябва да бъде попълнено,
+  // за да се идентифицира кой клиент да се актуализира.
+  Tenant tenant = 1;
+}
+
+// Отговор след актуализация на клиент.
+message UpdateTenantResponse {
+  // Актуализираният обект Tenant.
+  Tenant tenant = 1;
+}
+
+// Заявка за изтриване на клиент.
+message DeleteTenantRequest {
+  // Уникалният идентификатор на клиента, който да бъде изтрит.
+  string id = 1;
+}
+
+// Отговор след опит за изтриване.
+message DeleteTenantResponse {
+  // Показва дали операцията е била успешна.
+  bool success = 1;
+}

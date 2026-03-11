@@ -1,55 +1,61 @@
-# HR Leave Management System - Multi-Tenant Control Plane
+# Universal Tenant Control Plane
 
-## 🎯 Project Overview
-This is a high-scale, multi-tenant infrastructure designed to manage isolated HR environments (Leave Requests) for different companies. The project follows the **Level 2/3 SaaS Architecture** (Control Plane vs. Data Plane isolation).
+Това е универсална gRPC услуга за управление на клиенти (tenants) в мултитенантна архитектура. Проектът служи като "Control Plane" за управление на инфраструктурата, изолацията на бази данни и сигурността.
 
-### Key Architectural Pillars:
-- **Tenant Isolation:** Database-per-tenant strategy.
-- **Security:** Zero-Trust architecture using HashiCorp Vault for dynamic credentials.
-- **Scalability:** Application-level sharding (Tenant Routing).
-- **Technology Stack:** Go (Golang), gRPC, PostgreSQL, Redis, HashiCorp Vault, Docker.
+## 🎯 Архитектурни цели
+- **Изолация на данните:** Стратегия "База данни за всеки клиент" (Level 2/3 SaaS Architecture).
+- **Сигурност:** Zero-Trust модел, защита срещу инжекции и неаутентикиран достъп.
+- **Универсалност:** Независим от бизнес логиката "Blueprint", подходящ за всякакви системи.
 
 ---
 
 ## 🗺️ Roadmap & Implementation Phases
 
-### Phase 0: Infrastructure & Foundation (Current)
-- [ ] Setup `docker-compose.yml` with Control Plane DB, Data Plane DB, Redis, and Vault.
-- [ ] Define the `tenant.proto` gRPC contract for the Registry service.
-- [ ] Initialize the Go project structure (`/cmd`, `/internal`, `/api`).
+### Phase 0: Инфраструктура и Основи (Current)
+- [ ] Настройка на `docker-compose.yml` (Control Plane, Data Plane, Redis, Vault).
+- [ ] Инициализация на Go структурата в `cmd/tenant-control-service/`.
+- [ ] Дефиниране на gRPC договора (`api/proto/tenant.proto`).
 
-### Phase 1: Tenant Registry (The Control Plane)
-- [ ] Implement the `Registry` service: CRUD for tenant metadata.
-- [ ] Add Redis caching layer for fast tenant resolution.
-- [ ] Implement JWT Service-to-Service authentication.
+### Phase 1: Tenant Registry, Security & Testing
+- [ ] **Security Interceptors:** Имплементиране на JWT аутентикация за защита на gRPC ендпоинтите.
+- [ ] **Integration Tests:** "Black-box" тестове през реална мрежа в `internal/registry/integration_test.go`.
+- [ ] **Testcontainers:** Автоматично вдигане на ефимерни Docker контейнери (Postgres/Redis) за тестовете.
+- [ ] **Seeding & Migrations:** Автоматично попълване на тестови данни и мигриране на схемата преди тестове.
+- [ ] **Registry Service:** CRUD за метаданни с валидация срещу SQL инжекции.
+- [ ] **Caching Layer:** Redis интеграция за бърза резолюция.
 
 ### Phase 2: Tenant Provisioning (Automation)
-- [ ] Build the `Provisioner` module: Automate PostgreSQL database & user creation.
-- [ ] Integrate a Migration Orchestrator to run schemas on new tenant databases.
-- [ ] Implement the `CredentialsProvider` interface for Vault simulation.
+- [ ] **Provisioner Module:** Автоматично създаване на PostgreSQL бази и потребители.
+- [ ] **Vault Integration:** Динамични креденшъли чрез `CredentialsProvider` интерфейс.
+- [ ] **Migration Orchestrator:** Автоматично пускане на схеми върху новите бази.
 
 ### Phase 3: Resolver & Context Propagation
-- [ ] Create a Go Middleware for tenant resolution (Subdomain/Header based).
-- [ ] Implement gRPC client communication between the HR App and the Tenant Manager.
-- [ ] Inject active DB connections into the Request Context.
+- [ ] Middleware за резолюция (Header/Metadata базирана).
+- [ ] Инжектиране на активни DB конекции в Go `context`.
 
 ### Phase 4: Monitoring & Health Checks
-- [ ] Implement a dashboard/service to monitor tenant database health.
-- [ ] Setup automated logging and audit trails in Vault.
+- [ ] Dashboard за мониторинг на здравето на тенантните бази.
+- [ ] Одит логване на достъпа в Vault.
 
 ---
 
-## 🤖 Instructions for AI Assistants (Gemini/IDX)
-*When working on this project, please adhere to the following rules:*
+## 🧪 Тестване и Качество
+Проектът използва модерна методология за интеграционно тестване:
+1. **End-to-End Flow:** Тестване на пълния gRPC път – от клиента, през мрежата, до базата данни.
+2. **Testcontainers:** Използва се `testcontainers-go` за стартиране на истински Postgres/Redis в Docker контейнери по време на тест.
+3. **Database Seeding:** Всеки тест започва с прясно "сийдната" база данни за 100% възпроизводимост.
 
-1. **Strict Isolation:** Never mix Control Plane (Registry) logic with Data Plane (HR Business Logic).
-2. **Security First:** Always use interfaces for credential retrieval (prepare for Vault integration). No hardcoded passwords.
-3. **Context Matters:** Every database operation must be tenant-aware and scoped via Go `context`.
-4. **Step-by-Step:** Do not generate massive codebases at once. Focus only on the current Phase as marked in the Roadmap.
+
 
 ---
 
-## 🛠️ Getting Started
-1. Clone the repository.
-2. Run `docker-compose up -d` to start the infrastructure.
-3. Follow the instructions in `Phase 0` to begin development.
+## 🛠️ Изисквания (Prerequisites)
+
+Преди да започнете, уверете се, че имате:
+
+1. **Go (1.18+):** [Инсталация](https://go.dev/doc/install)
+2. **Protocol Buffer Compiler (protoc):** [Releases](https://github.com/protocolbuffers/protobuf/releases)
+3. **Go плъгини за protoc:**
+   ```sh
+   go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+   go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
